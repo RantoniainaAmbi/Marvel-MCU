@@ -28,3 +28,20 @@ app.get('/characters', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
+app.delete('/characters/:id', (req, res) => {
+  const filePath = path.join(__dirname, 'characters.json');
+  const id = req.params.id;
+
+  fs.readFile(filePath, (err, data) => {
+    if (err) return res.status(500).json({ error: 'Error reading file' });
+
+    let charactersData = JSON.parse(data);
+    charactersData.characters = charactersData.characters.filter(c => c.id != id);
+
+    fs.writeFile(filePath, JSON.stringify(charactersData, null, 2), err => {
+      if (err) return res.status(500).json({ error: 'Error writing file' });
+      res.json({ success: true });
+    });
+  });
+});
