@@ -1,10 +1,10 @@
 {
   "characters": [
     {
-      "id": 1,
+      "id": "1",
       "name": "Spider-Man",
       "realName": "Peter Parker",
-      "universe": "Earth-616"
+      "universe": "Earth-615"
     },
     {
       "id": 3,

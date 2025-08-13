@@ -45,3 +45,44 @@ app.delete('/characters/:id', (req, res) => {
     });
   });
 });
+
+app.post('/characters', (req, res) => {
+  const filePath = path.join(__dirname, 'characters.json');
+  const newCharacter = req.body;
+
+  fs.readFile(filePath, (err, data) => {
+    if (err) return res.status(500).json({ error: 'Erreur lecture fichier' });
+
+    let charactersData = JSON.parse(data);
+
+    if (charactersData.characters.find(c => c.id == newCharacter.id)) {
+      return res.status(400).json({ error: 'ID déjà existant' });
+    }
+
+    charactersData.characters.push(newCharacter);
+
+    fs.writeFile(filePath, JSON.stringify(charactersData, null, 2), err => {
+      if (err) return res.status(500).json({ error: 'Erreur écriture fichier' });
+      res.status(201).json({ success: true, character: newCharacter });
+    });
+  });
+});
+
+app.put('/characters/:id', (req, res) => {
+  const filePath = path.join(__dirname, 'characters.json');
+  const id = req.params.id;
+  const updatedCharacter = req.body
+  updatedCharacter.id = id;
+
+  fs.readFile(filePath, (err, data) => {
+    if (err) return res.status(500).json({ error: 'Erreur lecture fichier' });
+
+    let charactersData = JSON.parse(data);
+    charactersData.characters = charactersData.characters.map(c => c.id == id ? updatedCharacter : c);
+
+    fs.writeFile(filePath, JSON.stringify(charactersData, null, 2), err => {
+      if (err) return res.status(500).json({ error: 'Erreur écriture fichier' });
+      res.json({ success: true, character: updatedCharacter });
+    });
+  });
+});

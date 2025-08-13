@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
+import CharacterForm from "./form.jsx";
 
 export default function Containers() {
   const [characters, setCharacters] = useState([]);
+  const [editingCharacter, setEditingCharacter] = useState(null);
 
   const fetchCharacters = () => {
     fetch("http://localhost:8080/characters")
-      .then((response) => response.json())
+      .then((res) => res.json())
       .then((data) => setCharacters(data))
-      .catch((error) => console.error("Error fetching characters:", error));
+      .catch((err) => console.error(err));
   };
 
   useEffect(() => {
@@ -15,22 +17,43 @@ export default function Containers() {
   }, []);
 
   const handleDelete = (id) => {
-    const confirmDelete = window.confirm(
-      "Do you want to delete this character ?"
-    );
-    if (!confirmDelete) return;
-
-    fetch(`http://localhost:8080/characters/${id}`, {
-      method: "DELETE",
-    })
+    if (!window.confirm("Voulez-vous vraiment supprimer ce personnage ?")) return;
+    fetch(`http://localhost:8080/characters/${id}`, { method: "DELETE" })
       .then((res) => {
-        if (res.ok) {
-          fetchCharacters();
-        } else {
-          console.error("Erreur suppression personnage");
-        }
+        if (res.ok) fetchCharacters();
       })
       .catch((err) => console.error(err));
+  };
+
+  const handleEdit = (character) => {
+    setEditingCharacter(character);
+  };
+
+  const handleFormSubmit = (formData) => {
+    if (editingCharacter) {
+      fetch(`http://localhost:8080/characters/${formData.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      })
+        .then((res) => {
+          if (res.ok) {
+            fetchCharacters();
+            setEditingCharacter(null);
+          }
+        })
+        .catch((err) => console.error(err));
+    } else {
+      fetch(`http://localhost:8080/characters`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      })
+        .then((res) => {
+          if (res.ok) fetchCharacters();
+        })
+        .catch((err) => console.error(err));
+    }
   };
 
   return (
@@ -50,34 +73,40 @@ export default function Containers() {
           </tr>
         </thead>
         <tbody>
-          {characters
-            .filter((character) => character)
-            .map((character) => (
-              <tr key={character.id} className="hover:bg-gray-50">
-                <td className="px-4 py-2 border">{character.id}</td>
-                <td className="px-4 py-2 border">{character.name}</td>
-                <td className="px-4 py-2 border">{character.realName}</td>
-                <td className="px-4 py-2 border">{character.universe}</td>
-                <td className="px-4 py-2 border">
-                  <div className="flex gap-2">
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                      onClick={() => handleDelete(character.id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+          {characters.map((character) => (
+            <tr key={character.id} className="hover:bg-gray-50">
+              <td className="px-4 py-2 border">{character.id}</td>
+              <td className="px-4 py-2 border">{character.name}</td>
+              <td className="px-4 py-2 border">{character.realName}</td>
+              <td className="px-4 py-2 border">{character.universe}</td>
+              <td className="px-4 py-2 border">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleEdit(character)}
+                    className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(character.id)}
+                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
+
+      <div className="mt-6">
+        <CharacterForm
+          initialData={editingCharacter}
+          onCancel={() => setEditingCharacter(null)}
+          onSubmit={handleFormSubmit}
+        />
+      </div>
     </div>
   );
 }
